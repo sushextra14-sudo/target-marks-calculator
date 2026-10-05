@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Target Marks Calculator</title>
+<script>
+(function(){var t;try{t=localStorage.getItem("theme")}catch(e){}
+if(!t)t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+document.documentElement.setAttribute("data-theme",t)})();
+</script>
+<style>
+:root{--bg:#fbf8ef;--ink:#22304a;--card:#fffdf6;--accent:#ff6b4a;--accent-ink:#2b0d05;--hi:#ffe066;--doodle:rgba(34,48,74,.11);--muted:#5d6a82;--bad:#c0341f;--ok:#1f7a45;--field:#fff}
+:root[data-theme="dark"]{--bg:#182030;--ink:#eef1f7;--card:#222b3d;--accent:#ff8f70;--hi:rgba(255,212,59,.38);--doodle:rgba(238,241,247,.1);--muted:#a3aec6;--bad:#ff8a7a;--ok:#6fe3a0;--field:#182030}
+*{box-sizing:border-box}
+html{color-scheme:light}html[data-theme="dark"]{color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 "Segoe Print","Bradley Hand","Marker Felt","Comic Sans MS",cursive;min-height:100vh;transition:background .25s,color .25s}
+#doodles{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+#doodles span{position:absolute;color:var(--doodle);font-weight:700;line-height:1}
+main{position:relative;z-index:1;max-width:540px;margin:0 auto;padding:16px 16px 50px}
+.seg{display:inline-flex;border:2.5px solid var(--ink);border-radius:14px 6px 14px 6px;overflow:hidden;background:var(--card)}
+.seg button{all:unset;cursor:pointer;padding:6px 14px;font-size:.9rem;color:var(--ink)}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.tabs{display:flex;width:100%;margin:6px 0 16px}
+.tabs button{flex:1;text-align:center;padding:8px 2px;font-size:.85rem}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.top svg{width:78px;color:var(--ink);transform:rotate(-4deg);flex:none}
+h1{font-size:1.8rem;line-height:1.1;margin:0}
+h1 span{background:linear-gradient(transparent 55%,var(--hi) 55%);padding:0 5px}
+.card{background:var(--card);border:2.5px solid var(--ink);border-radius:20px 7px 22px 8px/8px 20px 7px 22px;padding:20px;box-shadow:5px 6px 0 var(--ink)}
+h2{font-size:1.05rem;margin:0 0 8px;display:flex;align-items:center;gap:10px}
+.n{flex:none;width:30px;height:30px;line-height:26px;text-align:center;border:2.5px solid var(--ink);border-radius:55% 45% 52% 48%;background:var(--hi);color:#22304a;font-size:.95rem}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+label{display:block;font-size:.85rem;color:var(--muted)}
+input,select{width:100%;padding:9px 11px;border:2px solid var(--ink);border-radius:12px 4px 12px 5px;background:var(--field);color:var(--ink);font:inherit;font-size:1rem}
+label input,label select{margin-top:4px}
+input::placeholder{color:var(--muted);opacity:.6}
+input[aria-invalid="true"]{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--field))}
+.go{width:100%;padding:11px 20px;border:2.5px solid var(--ink);border-radius:14px 6px 16px 6px;background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:700;font-size:1.05rem;cursor:pointer;box-shadow:3px 4px 0 var(--ink);transition:transform .08s,box-shadow .08s}
+.go:active{transform:translate(3px,4px);box-shadow:none}
+.go.alt{background:var(--card);color:var(--ink)}
+.nav{display:flex;gap:10px;margin-top:16px}.nav .go{flex:1}
+.msg{margin:0 0 14px;padding:8px 12px;border-left:5px solid var(--accent);background:var(--hi);color:#22304a;border-radius:4px 10px 10px 4px;font-size:.95rem}
+.out{padding:12px 16px;border:2.5px dashed var(--ink);border-radius:14px 5px 16px 6px}
+.out p{margin:4px 0;font-size:.95rem}
+.oops{padding:10px 14px;border:2.5px dashed var(--bad);border-radius:14px 5px 16px 6px;margin-top:10px}
+.oops b{color:var(--bad)}.oops p{margin:6px 0 0;font-size:.93rem}.oops .tip{color:var(--muted)}
+.big{font-size:1.7rem;font-weight:700;line-height:1.25}
+mark{background:linear-gradient(transparent 55%,var(--hi) 55%);color:inherit;padding:0 5px}
+.bad{color:var(--bad);font-weight:700}.ok{color:var(--ok);font-weight:700}
+.sec{margin:14px 0 2px;font-weight:700;font-size:.92rem}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+td{padding:4px 0;border-bottom:2px dashed var(--muted)}td+td{text-align:right}
+.hint{font-size:.8rem;color:var(--muted);margin:6px 0 0}
+details{margin-top:12px}summary{cursor:pointer;font-size:.9rem;color:var(--muted)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div id="doodles" aria-hidden="true"></div>
+<main>
+<div class="top">
+<h1>Target <span>marks</span> calculator</h1>
+<svg viewBox="0 0 100 120" role="img" aria-label="Hand-drawn calculator" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<defs><filter id="w"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter></defs>
+<g filter="url(#w)"><rect x="10" y="8" width="80" height="104" rx="12" fill="var(--card)"/><rect x="20" y="18" width="60" height="22" rx="5"/>
+<path d="M24 58h12M30 52v12M46 58h12M68 52l10 12m0-12l-10 12M24 82h12M46 82h12M66 78l12 0m-12 8l12 0M26 98h8M48 98h8M70 98h8" stroke="var(--accent)"/></g>
+</svg>
+</div>
+<div class="top" style="justify-content:space-between"><p class="hint" style="margin:0;max-width:28ch">For one subject at a time, on a 10-point grade scale.</p><div class="seg" role="group" aria-label="Theme">
+<button id="tl" aria-pressed="false" onclick="setTheme('light')">☀ Light</button>
+<button id="td" aria-pressed="false" onclick="setTheme('dark')">☾ Dark</button>
+</div></div>
+
+<div class="seg tabs" id="mainTabs" role="tablist">
+<button role="tab" data-p="s1" aria-selected="true">1 Pattern</button>
+<button role="tab" data-p="s2" aria-selected="false">2 Marks</button>
+<button role="tab" data-p="s3" aria-selected="false">3 Target</button>
+<button role="tab" data-p="s4" aria-selected="false">4 Result</button>
+</div>
+
+<section class="card">
+<div id="s1">
+<h2><b class="n">1</b>Choose your marks pattern</h2>
+<label><select id="pat" aria-label="Marks pattern">
+<option value="30,70">Internal 30 / End-sem 70</option><option value="20,80">Internal 20 / End-sem 80</option><option value="40,60">Internal 40 / End-sem 60</option><option value="50,50">Internal 50 / End-sem 50</option><option value="custom">Custom</option>
+</select></label>
+<div class="pair" id="custom" hidden>
+<label>Internal out of<input id="mm" type="number" min="1" value="30"></label>
+<label>End-sem counts for<input id="em" type="number" min="1" value="70"></label>
+</div>
+<label style="margin-top:12px">End-sem paper is marked out of
+<select id="pp" aria-label="End-sem paper marks"><option value="same">Same as its weight (no conversion)</option><option value="100">100</option><option value="80">80</option><option value="70">70</option><option value="60">60</option><option value="custom">Custom</option></select></label>
+<div id="ppc" hidden style="margin-top:10px"><label>Paper marked out of<input id="pc" type="number" min="1" value="100"></label></div>
+<p class="hint" id="conv"></p>
+<details><summary>Grade rules (change if your college differs)</summary>
+<label style="margin-top:8px">Cutoff % for grade 10, 9, 8, 7, 6, 5<input id="cut" value="90,80,70,60,50,40"></label>
+<label style="margin-top:10px">Minimum end-sem % to pass (0 if none)<input id="mp" type="number" min="0" max="100" value="0"></label>
+</details>
+<div class="nav"><button class="go" onclick="go('s2')">Next</button></div>
+</div>
+
+<div id="s2" hidden>
+<h2><b class="n">2</b>Your marks in this subject</h2>
+<p class="msg">Enter your marks from last semester, or from any one subject you want to plan for.</p>
+<div class="pair" style="margin-top:0">
+<label>Internal marks (out of <span class="lm">30</span>)<input id="m1" type="number" min="0" placeholder="24"></label>
+<label>End-sem paper marks (out of <span class="le">70</span>)<input id="e1" type="number" min="0" placeholder="55"></label>
+</div>
+<p class="bad" id="mkErr" role="alert" hidden></p>
+<p class="hint">Use your best estimate if your internal marks aren't announced yet. You can also skip this: your target is then split evenly between internal and end-sem.</p>
+<div class="nav"><button class="go alt" onclick="go('s1')">Back</button><button class="go" onclick="if(checkMarks())go('s3')">Next</button></div>
+</div>
+
+<div id="s3" hidden>
+<h2><b class="n">3</b>Your target for next sem</h2>
+<label>Target grade<select id="tg" aria-label="Target grade"></select></label>
+<label style="margin-top:10px">Already know your internal marks? Enter them<input id="m2" type="number" min="0" placeholder="e.g. 22" aria-describedby="m2note"></label>
+<p class="hint" id="m2note">Leave empty if your internal marks aren't announced yet. If you fill it in, the result shows only end-sem possibilities.</p>
+<details><summary>Credits and SGPA (optional)</summary>
+<div class="pair">
+<label>This subject's credits<input id="cr" type="number" min="0" step="0.5" placeholder="4"></label>
+<label>Total credits this semester<input id="ct" type="number" min="0" step="0.5" placeholder="22"></label>
+</div>
+<label style="margin-top:10px">Expected average grade point in your other subjects<input id="og" type="number" min="0" max="10" step="0.01" placeholder="8.5"></label>
+<p class="hint">Total credits means all your subjects added up, including this one.</p>
+</details>
+<div class="nav"><button class="go alt" onclick="go('s2')">Back</button><button class="go" onclick="calc()">Calculate</button></div>
+</div>
+
+<div id="s4" hidden>
+<div id="res"><p class="hint">Fill in the steps and press Calculate.</p></div>
+</div>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>{const v=$(id).value.trim();return v===""?NaN:parseFloat(v)};
+const GN=["O","E","A","B","C","D"];
+const gradeOf=(p,c)=>{const i=c.findIndex(x=>p>=x);return i<0?0:10-i};
+const paperMax=()=>{const v=$("pp").value;return v==="same"?num("em"):v==="custom"?num("pc"):parseFloat(v)};
+const cuts=()=>$("cut").value.split(",").map(Number).filter(x=>!isNaN(x));
+
+function setTheme(t){
+  document.documentElement.setAttribute("data-theme",t);
+  try{localStorage.setItem("theme",t)}catch(e){}
+  $("tl").setAttribute("aria-pressed",t==="light");$("td").setAttribute("aria-pressed",t==="dark");
+}
+setTheme(document.documentElement.getAttribute("data-theme"));
+
+(function(){
+  const sy=["+","−","×","÷","%","=","π","√","∑","∞","≈","x²","%","+","÷","="];
+  const pos=[[4,6],[18,22],[8,44],[3,70],[15,90],[34,12],[40,60],[30,84],[52,30],[58,92],[66,8],[72,52],[80,76],[88,18],[92,44],[86,90]];
+  $("doodles").innerHTML=sy.map((s,i)=>`<span style="left:${pos[i][0]}%;top:${pos[i][1]}%;font-size:${36+(i*13%38)}px;transform:rotate(${(i*29%60)-30}deg)">${s}</span>`).join("");
+})();
+
+function fillTargets(){$("tg").innerHTML=cuts().slice(0,6).map((x,i)=>`<option value="${i}">${GN[i]} (${10-i})</option>`).join("")}
+function labels(){
+  document.querySelectorAll(".lm").forEach(e=>e.textContent=num("mm")||"");
+  const P=paperMax(),E=num("em");
+  document.querySelectorAll(".le").forEach(e=>e.textContent=P||"");
+  $("conv").textContent=P>0&&E>0&&P!==E?`The paper is marked out of ${P} and counts as ${E} in your total.`:"";
+  checkMarks();
+}
+function checkMarks(){
+  const M=num("mm"),E=num("em"),m1=num("m1"),e1=num("e1");
+  const P=paperMax(),bm=!isNaN(m1)&&(m1<0||m1>M),be=!isNaN(e1)&&(e1<0||e1>P);
+  $("m1").setAttribute("aria-invalid",bm);$("e1").setAttribute("aria-invalid",be);
+  $("mkErr").hidden=!(bm||be);
+  if(bm||be) $("mkErr").textContent=`⚠ Enter valid marks. Internal must be between 0 and ${M||"?"}, and end-sem paper marks between 0 and ${P||"?"}, for the pattern you chose.`;
+  return !(bm||be);
+}
+$("pat").addEventListener("change",()=>{
+  const v=$("pat").value;$("custom").hidden=v!=="custom";
+  if(v!=="custom"){const[a,b]=v.split(",");$("mm").value=a;$("em").value=b}
+  labels();
+});
+$("mm").addEventListener("input",labels);$("em").addEventListener("input",labels);
+$("m1").addEventListener("input",checkMarks);$("e1").addEventListener("input",checkMarks);
+$("cut").addEventListener("input",fillTargets);
+$("pp").addEventListener("change",()=>{$("ppc").hidden=$("pp").value!=="custom";labels()});
+$("pc").addEventListener("input",labels);
+fillTargets();
+
+function go(id){document.querySelector(`#mainTabs [data-p="${id}"]`).click()}
+document.addEventListener("click",e=>{
+  const b=e.target.closest(".tabs button[data-p]");if(!b) return;
+  const g=b.parentNode,ids=[...g.children].map(x=>x.dataset.p);
+  [...g.children].forEach(x=>x.setAttribute("aria-selected",x===b));
+  ids.forEach(i=>$(i).hidden=i!==b.dataset.p);
+});
+
+const oops=(t,why,tip)=>`<div class="oops"><b>⚠ ${t}</b>${why?`<p>${why}</p>`:""}${tip?`<p class="tip">${tip}</p>`:""}</div>`;
+function err(t,why,tip){$("res").innerHTML=oops(t,why,tip);go("s4")}
+const sec=t=>`<div class="sec">${t}</div>`;
+const tbl=r=>"<table>"+r.map(([l,v])=>`<tr><td>${l}</td><td>${v}</td></tr>`).join("")+"</table>";
+
+function calc(){
+  const M=num("mm"),E=num("em"),m1=num("m1"),e1=num("e1"),m2=num("m2"),c=cuts(),ti=parseInt($("tg").value),mp=num("mp")||0,P=paperMax();
+  if(!(M>0&&E>0)) return err("The marks pattern isn't valid","Internal and end-sem totals must both be above 0.","Choose a pattern in tab 1, or enter your own totals under Custom.");
+  if(!(P>0)) return err("The end-sem paper marks aren't valid","The paper must be marked out of a number above 0.","Fix it in tab 1 under “End-sem paper is marked out of”.");
+  if(c.length<2||isNaN(ti)||c.some((x,i)=>x>100||x<=0||(i&&x>=c[i-1]))) return err("The grade cutoffs aren't valid","Cutoffs must go from high to low, each between 1 and 100, for example 90,80,70,60,50,40.","Fix them under “Grade rules” in tab 1.");
+  if(mp<0||mp>100) return err("The minimum end-sem % isn't valid","It must be between 0 and 100.","Fix it under “Grade rules” in tab 1.");
+  if([m1,e1,m2].some(x=>x<0)) return err("Marks can't be negative","One of the marks you entered is below 0.","Correct it in tab 2 or tab 3.");
+  const over=[];
+  if(m1>M) over.push(`your internal marks (${m1}) are above ${M}`);
+  if(m2>M) over.push(`the internal marks you already got (${m2}) are above ${M}`);
+  if(e1>P) over.push(`your end-sem paper marks (${e1}) are above ${P}`);
+  if(over.length) return err("Marks are higher than the maximum",over.join("; ")+".","Check the marks pattern in tab 1, or correct the marks.");
+  const cr=num("cr"),T=num("ct"),og=num("og");
+  if(!isNaN(cr)||!isNaN(T)){
+    if(isNaN(cr)||isNaN(T)) return err("The credits are incomplete","Enter both this subject's credits and the total credits for the semester.","Fix it under “Credits and SGPA” in tab 3.");
+    if(cr<=0||T<cr) return err("The credits don't add up",`The total credits (${T}) can't be less than this subject's credits (${cr}), and credits must be above 0.`,"Fix it under “Credits and SGPA” in tab 3.");
+  }
+  if(og>10||og<0) return err("The average grade point isn't valid",`Grade points go from 0 to 10, but you entered ${og}.`,"Fix it under “Credits and SGPA” in tab 3.");
+  const tot=M+E,X=Math.ceil(c[ti]/100*tot),gp=10-ti,name=GN[ti],minE=Math.ceil(mp/100*E),known=!isNaN(m2),ec=isNaN(e1)?NaN:e1*E/P;
+  if(X>tot) return err("This target isn't possible",`${name} (${gp}) needs ${X} marks, but the exam total is only ${tot}.`,"The grade cutoff is above 100%. Fix the cutoffs in tab 1 or choose a lower grade.");
+  const G=(m,e)=>e<minE?-1:gradeOf((m+e)/tot*100,c);
+  const r1=x=>Math.round(x*10)/10;
+  const ew=n=>P===E?`${n} out of ${E}`:`${Math.ceil(n*P/E)} out of ${P} in the paper (counts as ${n} of ${E})`;
+  const el=v=>P===E?`End-sem ${v}`:`Paper ${Math.round(v*P/E)}/${P} (${v}/${E})`;
+  const hasI=!isNaN(cr)&&!isNaN(T),hasS=hasI&&(T===cr||!isNaN(og));
+  const sg=g=>(g*cr+(T>cr?og*(T-cr):0))/T;
+  const failTxt=`<span class="bad">fail (end-sem below ${minE})</span>`;
+  const gtxt=g=>`grade ${g}${g===0?" (fail)":""}`;
+  const gl=g=>g<0?failTxt:gtxt(g);
+  const gtx=g=>gtxt(g)+(hasS?`, SGPA ${sg(g).toFixed(2)}`:"");
+  const gt=g=>g<0?failTxt:gtx(g);
+
+  let a=`<div class="big">To get <mark>${name} (${gp})</mark> you need <mark>${X}</mark> out of ${tot}</div>`;
+  if(!isNaN(m1)&&!isNaN(ec)) a+=`<p>Last time: ${m1} internal + ${r1(ec)} from the paper = ${r1(m1+ec)}, ${gl(G(m1,ec))}.</p>`;
+  if(P!==E) a+=`<p class="hint">The end-sem paper is marked out of ${P} and counts as ${E}. Paper marks are shown where it matters; other tables use the converted marks.</p>`;
+  if(hasI) a+=`<p class="hint">This subject is ${cr} of ${T} credits, so each grade point here moves your SGPA by about ${(cr/T).toFixed(2)}.${hasS?"":" Add your expected average grade point in other subjects to see the SGPA."}</p>`;
+  if(minE>0) a+=`<p class="hint">To pass you also need at least ${ew(minE)} in end-sem.</p>`;
+
+  // Suggested split of the target between mid and end
+  let mid,end,basis="the same percentage in both exams";
+  if(!isNaN(m1)&&!isNaN(ec)&&m1+ec>0){mid=Math.round(m1*X/(m1+ec));basis="how you scored last time"} else mid=Math.round(X*M/tot);
+  mid=Math.max(Math.max(0,X-E),Math.min(M,X,mid));end=X-mid;
+  if(end<minE){end=minE;mid=Math.max(0,X-end)}
+  const raw=X-m2,nd=known?Math.max(raw,minE):end;
+  if(!known) a+=sec("Aim for about")+`<p>Internal: <b>${mid}</b> out of ${M}<br>End-sem: <b>${ew(end)}</b></p><p class="hint">Split based on ${basis}.</p>`;
+  else {
+    a+=sec(`With ${m2} internal marks`);
+    if(raw>E){
+      const bg=gradeOf((m2+E)/tot*100,c),bi=10-bg,nb=bg>0?Math.max(0,Math.ceil(c[bi]/100*tot)-m2,minE):0;
+      a+=oops("This target isn't possible",`You need ${raw} out of ${E} in end-sem, but the most you can score is ${E}. With ${m2} internal marks, full marks in end-sem gives ${m2+E} out of ${tot}, which is below the ${X} needed for ${name} (${gp}).`,
+        bg>0?`The highest grade you can still reach is ${GN[bi]} (${bg}). It needs ${ew(nb)} in end-sem.`:"Even full marks in end-sem won't reach any grade. Speak to your teacher about your options.");
+    } else if(raw<=0) a+=minE===0?`<p class="ok">You've already reached it. Any end-sem score keeps ${name} (${gp}).</p>`:`<p class="ok">Your total is already enough. Score at least <b>${ew(minE)}</b> in end-sem to pass.</p>`;
+    else a+=`<p>Score at least <b>${ew(nd)}</b>${P===E?" in end-sem":""}.</p>`;
+  }
+
+  // If you score less than the aim
+  const bm=known?m2:mid;
+  if(nd>0&&nd<=E){
+    const ms=Math.max(1,Math.round(M*.15)),s1=Math.max(1,Math.round(E*.07)),s2=s1*2;
+    const cs=known?[[`End-sem ${s1} less`,0,s1],[`End-sem ${s2} less`,0,s2],[`End-sem ${s1*3} less`,0,s1*3]]
+      :[[`Internal ${ms} less`,ms,0],[`End-sem ${s1} less`,0,s1],[`End-sem ${s2} less`,0,s2],[`Both less (${ms} internal, ${s1} end-sem)`,ms,s1],[`Both less (${ms} internal, ${s2} end-sem)`,ms,s2]];
+    a+=sec("If you score less than this")+`<p class="hint">Even 1 mark short of ${X} in total drops you to grade ${gradeOf((X-1)/tot*100,c)}.</p>`+tbl(cs.map(([l,x,y])=>{
+      const mv=Math.max(0,bm-x),ev=Math.max(0,nd-y);return [`${l}: ${mv} + ${ev}`,`${mv+ev}/${tot}: ${gt(G(mv,ev))}`]}));
+  }
+
+  let out;
+  if(known){
+    // Internal is fixed: only end-sem possibilities
+    const gr=c.slice(0,6).map((x,i)=>{const n=Math.max(Math.ceil(x/100*tot)-m2,minE);
+      return [`${GN[i]} (${10-i})`,n>E?'<span class="bad">not possible</span>':n<=0?'<span class="ok">already secured</span>':ew(n)]});
+    const sc=[...new Set([1,.9,.8,.7,.6,.5,.4,.3].map(k=>Math.round(E*k)))].map(v=>[el(v),`${m2+v}/${tot}: ${gt(G(m2,v))}`]);
+    out=`<div class="seg tabs"><button role="tab" data-p="r1" aria-selected="true">Aim for</button><button role="tab" data-p="r2" aria-selected="false">End-sem options</button></div><div class="out"><div id="r1">${a}</div><div id="r2" hidden><p class="hint">Your internal marks are fixed at ${m2}, so only the end-sem can change.</p>${sec("End-sem marks needed for each grade")}${tbl(gr)}${sec("What each end-sem score gives")}${tbl(sc)}</div></div>`;
+  } else {
+    const mids=[...new Set([mid-6,mid-3,mid,mid+3].map(x=>Math.max(0,Math.min(M,x))))];
+    const b=sec("If your internal marks are lower or higher")+tbl(mids.map(m=>{const n=Math.max(X-m,minE);
+      return [`Internal ${m}`,n>E?`<span class="bad">not possible, best is grade ${gradeOf((m+E)/tot*100,c)}</span>`:n<=0?'<span class="ok">already secured</span>':`need ${ew(n)} in end-sem`]}))
+      +(mids.some(m=>Math.max(X-m,minE)>E)?`<p class="hint">“Not possible” means even ${E}/${E} in end-sem can't reach ${X} with those internal marks.</p>`:"");
+    const d=sec(`What you'd get with ${mid} internal marks`)+tbl([...new Set([E,Math.round(E*.85),Math.round(E*.7),Math.round(E*.55)])].map(e=>[el(e),`${mid+e} total, ${gt(G(mid,e))}`]));
+    const tr=[],seen=new Set();
+    [-10,-5,0,5,10].forEach(o=>{const t=Math.max(0,Math.min(tot,X+o));if(seen.has(t)) return;seen.add(t);
+      const dd=t-X;tr.push([`${dd<0?-dd+" less":dd>0?dd+" more":"Your target"} (${t}/${tot})`,gtx(gradeOf(t/tot*100,c))])});
+    const bmk=!isNaN(m1)?m1:mid,bek=!isNaN(ec)?Math.round(ec):end,cl=(x,mx)=>Math.max(0,Math.min(mx,x));
+    const dm=Math.max(1,Math.round(M*.15)),de=Math.max(1,Math.round(E*.15)),gs=new Set(),gd=[];
+    [-1,0,1].forEach(i=>[-1,0,1].forEach(j=>{const mv=cl(bmk+i*dm,M),ev=cl(bek+j*de,E),k=mv+","+ev;if(gs.has(k)) return;gs.add(k);
+      gd.push([`Internal ${mv}, End-sem ${ev}${i===0&&j===0?" (same)":""}`,`${mv+ev}/${tot}: ${gt(G(mv,ev))}`])}));
+    const lm=sec(`If you score less or more than ${X}`)+tbl(tr)+(minE>0?`<p class="hint">Assumes you meet the end-sem minimum of ${minE}.</p>`:"")+sec(`If internal and end-sem differ from your marks (internal ${bmk}, end-sem ${bek})`)+tbl(gd)+`<p class="hint">Internal moves by ${dm} and end-sem by ${de} each way.</p>`;
+    out=`<div class="seg tabs"><button role="tab" data-p="r1" aria-selected="true">Aim for</button><button role="tab" data-p="r2" aria-selected="false">Internal changes</button><button role="tab" data-p="r3" aria-selected="false">Grades</button><button role="tab" data-p="r4" aria-selected="false">Less / more</button></div><div class="out"><div id="r1">${a}</div><div id="r2" hidden>${b}</div><div id="r3" hidden>${d}</div><div id="r4" hidden>${lm}</div></div>`;
+  }
+  $("res").innerHTML=out;go("s4");
+}
+</script>
+</body>
+</html>
